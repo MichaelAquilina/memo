@@ -17,7 +17,7 @@ class MemoWindow(Gtk.Window):
 
         self.setup_header_bar()
         self.setup_text_area()
-        self.load_tomboy_text()
+        # self.load_tomboy_text()
 
     def load_tomboy_text(self):
         import os
@@ -33,10 +33,32 @@ class MemoWindow(Gtk.Window):
         self.textbuffer = self.text_view.get_buffer()
         self.textbuffer.set_text(root.find('.//tomboy:note-content', NS).text)
 
+    def save_text(self, event):
+        text_buffer = self.text_view.get_buffer()
+        with open('memo.txt', 'w') as fp:
+            fp.write(text_buffer.get_text(
+                text_buffer.get_start_iter(),
+                text_buffer.get_end_iter(),
+                False,
+            ))
+
     def setup_header_bar(self):
         self.header = Gtk.HeaderBar(margin=0)
-        self.header.set_show_close_button(True)
         self.header.set_title(self.get_title())
+
+        toolbar_items = (
+            (Gtk.STOCK_CLOSE, "Close", Gtk.main_quit),
+            (Gtk.STOCK_REFRESH, "Reload", None),
+            (Gtk.STOCK_SAVE, "Save", self.save_text),
+        )
+        for stock_item, tooltip, callback_method in toolbar_items:
+            button = Gtk.ToolButton(stock_item)
+            button.set_tooltip_text(tooltip)
+            if callback_method:
+                button.connect('clicked', callback_method)
+
+            button.set_is_important(True)
+            self.header.pack_end(button)
 
         notebooks = [
             "Dev",
