@@ -14,10 +14,12 @@ class MemoWindow(Gtk.Window):
             icon_name="tomboy",
         )
         self.resize(600, 600)
+        self.connect('delete-event', self.close_and_save)
 
         self.setup_header_bar()
         self.setup_text_area()
         self.load_text()
+        self.update_title()
 
     def load_text(self):
         with open('memo.txt', 'r') as fp:
@@ -25,7 +27,7 @@ class MemoWindow(Gtk.Window):
         text_buffer = self.text_view.get_buffer()
         text_buffer.set_text(text)
 
-    def save_text(self, event):
+    def save_text(self):
         text_buffer = self.text_view.get_buffer()
         note_text = text_buffer.get_text(
             text_buffer.get_start_iter(),
@@ -35,14 +37,28 @@ class MemoWindow(Gtk.Window):
         with open('memo.txt', 'w') as fp:
             fp.write(note_text)
 
+    def update_title(self):
+        text_buffer = self.text_view.get_buffer()
+        note_text = text_buffer.get_text(
+            text_buffer.get_start_iter(),
+            text_buffer.get_end_iter(),
+            False,
+        )
+        index = note_text.find('\n')
+        title = note_text[:index] if index > 0 else note_text
+
+        self.header.set_title(title.strip())
+
+    def close_and_save(self, *args, **kwargs):
+        self.save_text()
+        Gtk.main_quit(*args, **kwargs)
+
     def setup_header_bar(self):
         self.header = Gtk.HeaderBar(margin=0)
         self.header.set_title(self.get_title())
 
         toolbar_items = (
-            (Gtk.STOCK_CLOSE, "Close", Gtk.main_quit),
-            (Gtk.STOCK_REFRESH, "Reload", None),
-            (Gtk.STOCK_SAVE, "Save", self.save_text),
+            (Gtk.STOCK_CLOSE, "Close", self.close_and_save),
         )
         for stock_item, tooltip, callback_method in toolbar_items:
             button = Gtk.ToolButton(stock_item)
@@ -70,13 +86,16 @@ class MemoWindow(Gtk.Window):
         self.set_titlebar(self.header)
 
     def setup_text_area(self):
+        def key_release_event(event, user_data):
+            self.update_title()
+
         self.text_view = Gtk.TextView(margin=8)
         self.text_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.text_view.connect('key-release-event', key_release_event)
         self.add(self.text_view)
 
 
 if __name__ == '__main__':
     win = MemoWindow()
-    win.connect('delete-event', Gtk.main_quit)
     win.show_all()
     Gtk.main()
