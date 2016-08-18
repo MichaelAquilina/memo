@@ -17,30 +17,23 @@ class MemoWindow(Gtk.Window):
 
         self.setup_header_bar()
         self.setup_text_area()
-        # self.load_tomboy_text()
+        self.load_text()
 
-    def load_tomboy_text(self):
-        import os
-        import xml.etree.ElementTree as ET
-        NS = {
-            'tomboy': 'http://beatniksoftware.com/tomboy',
-        }
-        path = os.path.expanduser('~/.local/share/tomboy/02969b4f-59f7-401a-95d1-c4ad99fcc7ca.note')
-
-        root = ET.parse(path)
-        self.header.set_title(root.find('tomboy:title', NS).text)
-
-        self.textbuffer = self.text_view.get_buffer()
-        self.textbuffer.set_text(root.find('.//tomboy:note-content', NS).text)
+    def load_text(self):
+        with open('memo.txt', 'r') as fp:
+            text = fp.read()
+        text_buffer = self.text_view.get_buffer()
+        text_buffer.set_text(text)
 
     def save_text(self, event):
         text_buffer = self.text_view.get_buffer()
+        note_text = text_buffer.get_text(
+            text_buffer.get_start_iter(),
+            text_buffer.get_end_iter(),
+            False,
+        )
         with open('memo.txt', 'w') as fp:
-            fp.write(text_buffer.get_text(
-                text_buffer.get_start_iter(),
-                text_buffer.get_end_iter(),
-                False,
-            ))
+            fp.write(note_text)
 
     def setup_header_bar(self):
         self.header = Gtk.HeaderBar(margin=0)
