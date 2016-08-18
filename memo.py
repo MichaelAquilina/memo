@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import gi
 gi.require_version('Gtk', '3.0')  # noqa
 
@@ -8,6 +10,8 @@ from gi.repository import Gtk  # noqa
 
 class MemoWindow(Gtk.Window):
     def __init__(self):
+        self.setup_notebook_directory()
+
         Gtk.Window.__init__(
             self,
             title="Memo",
@@ -21,8 +25,19 @@ class MemoWindow(Gtk.Window):
         self.load_text()
         self.update_title()
 
+    def setup_notebook_directory(self):
+        self.notes_directory = os.path.expanduser('~/.local/share/memo/')
+        if not os.path.exists(self.notes_directory):
+            os.mkdir(self.notes_directory)
+
+    def get_current_path(self):
+        return os.path.join(
+            self.notes_directory,
+            'memo.txt',
+        )
+
     def load_text(self):
-        with open('memo.txt', 'r') as fp:
+        with open(self.get_current_path(), 'r') as fp:
             text = fp.read()
         text_buffer = self.text_view.get_buffer()
         text_buffer.set_text(text)
@@ -34,7 +49,11 @@ class MemoWindow(Gtk.Window):
             text_buffer.get_end_iter(),
             False,
         )
-        with open('memo.txt', 'w') as fp:
+        if not note_text.endswith('\n'):
+            note_text += '\n'
+            text_buffer.set_text(note_text)
+
+        with open(self.get_current_path(), 'w') as fp:
             fp.write(note_text)
 
     def update_title(self):
@@ -69,14 +88,9 @@ class MemoWindow(Gtk.Window):
             button.set_is_important(True)
             self.header.pack_end(button)
 
-        notebooks = [
-            "Dev",
-            "Groceries",
-            "Lyst",
-            "Open Source",
-        ]
-
         self.notebook_combobox = Gtk.ComboBoxText()
+        notebooks = os.listdir(self.notes_directory)
+
         for nb in notebooks:
             self.notebook_combobox.append_text(nb)
         self.notebook_combobox.set_active(0)
