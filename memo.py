@@ -9,6 +9,8 @@ from gi.repository import Gtk  # noqa
 
 
 class MemoWindow(Gtk.Window):
+    MEMO_STORAGE = '~/.local/share/memo/'
+
     def __init__(self):
         self.setup_notebook_directory()
 
@@ -26,7 +28,7 @@ class MemoWindow(Gtk.Window):
         self.update_title()
 
     def setup_notebook_directory(self):
-        self.notes_directory = os.path.expanduser('~/.local/share/memo/')
+        self.notes_directory = os.path.expanduser(self.MEMO_STORAGE)
         if not os.path.exists(self.notes_directory):
             os.mkdir(self.notes_directory)
 
