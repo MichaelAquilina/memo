@@ -39,6 +39,9 @@ class MemoWindow(Gtk.Window):
         )
 
     def load_text(self):
+        if not os.path.exists(self.get_current_path()):
+            return
+
         with open(self.get_current_path(), 'r') as fp:
             text = fp.read()
         text_buffer = self.text_view.get_buffer()
