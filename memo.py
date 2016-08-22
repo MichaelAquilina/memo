@@ -83,7 +83,8 @@ class MemoWindow(Gtk.Window):
         return title.strip()
 
     def update_title(self):
-        self.header.set_title(self.get_current_title())
+        title = self.get_current_title()
+        self.header.set_title(title if title else '<New Memo>')
 
     def close_and_save(self, *args, **kwargs):
         self.save_text()
