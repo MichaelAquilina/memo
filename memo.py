@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import glob
 import os
 
 import gi
 gi.require_version('Gtk', '3.0')  # noqa
 
 from gi.repository import Gtk  # noqa
+
+
+def slugify(text):
+    tokens = text.split(' ')
+    return '_'.join([t.lower() for t in tokens])
 
 
 class MemoWindow(Gtk.Window):
@@ -35,7 +41,8 @@ class MemoWindow(Gtk.Window):
     def get_current_path(self):
         return os.path.join(
             self.notes_directory,
-            'memo.txt',
+            self.get_current_folder(),
+            '{}.md'.format(slugify(self.get_current_title())),
         )
 
     def load_text(self):
@@ -61,7 +68,10 @@ class MemoWindow(Gtk.Window):
         with open(self.get_current_path(), 'w') as fp:
             fp.write(note_text)
 
-    def update_title(self):
+    def get_current_folder(self):
+        return self.notebook_combobox.get_active_text()
+
+    def get_current_title(self):
         text_buffer = self.text_view.get_buffer()
         note_text = text_buffer.get_text(
             text_buffer.get_start_iter(),
@@ -70,8 +80,10 @@ class MemoWindow(Gtk.Window):
         )
         index = note_text.find('\n')
         title = note_text[:index] if index > 0 else note_text
+        return title.strip()
 
-        self.header.set_title(title.strip())
+    def update_title(self):
+        self.header.set_title(self.get_current_title())
 
     def close_and_save(self, *args, **kwargs):
         self.save_text()
@@ -94,7 +106,8 @@ class MemoWindow(Gtk.Window):
             self.header.pack_end(button)
 
         self.notebook_combobox = Gtk.ComboBoxText()
-        notebooks = os.listdir(self.notes_directory)
+        notebooks = glob.glob('{}/*/'.format(self.notes_directory))
+        notebooks = [d.split('/')[-2] for d in notebooks]
 
         for nb in notebooks:
             self.notebook_combobox.append_text(nb)
